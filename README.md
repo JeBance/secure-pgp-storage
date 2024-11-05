@@ -73,12 +73,12 @@ The `createStorage` function creates a new ECC key pair and stores them in class
 
 #### Encrypt *String* data with PGP keys
 
-Encryption will use the algorithm preferred by the public (encryption) key (defaults to aes256 for keys generated in OpenPGP.js).
+Encryption will use the algorithm preferred by the public (encryption) key (defaults to aes256 for keys generated in OpenPGP.js). The `signature` parameter is optional and is required for signing.
 
 ```js
 (async () => {
 	const recipientPublicKeyArmored = sPGPs.publicKeyArmored;	// For example, we will use our public key.
-	let encrypted = await sPGPs.encryptMessage(recipientPublicKeyArmored, 'Hello world!');
+	let encrypted = await sPGPs.encryptMessage('Hello world!', recipientPublicKeyArmored, signature = true);
 	console.log('Encrypted message:');
 	console.log(encrypted);
 	console.log('Check message:', await sPGPs.checkMessage(encrypted));
@@ -87,14 +87,17 @@ Encryption will use the algorithm preferred by the public (encryption) key (defa
 
 #### Decrypt *String* data with PGP keys
 
-Decryption will use the algorithm used for encryption.
+Decryption will use the algorithm used for encryption. The `senderPublicKeyArmored` parameter is optional and required to verify the signature.
 
 ```js
 (async () => {
 	const senderPublicKeyArmored = sPGPs.publicKeyArmored;
-	let decrypted = await sPGPs.decryptMessage(senderPublicKeyArmored, encrypted);
+	let decrypted = await sPGPs.decryptMessage(encrypted, senderPublicKeyArmored);
 	console.log('Decrypted message:');
 	console.log(decrypted);
+	console.log(decrypted.data);
+	console.log(decrypted.signatures[0].keyID.toHex());
+	console.log(await decrypted.signatures[0].verified);
 })();
 ```
 

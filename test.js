@@ -31,7 +31,7 @@ sPGPs = new securePGPstorage();
 	console.log('\x1b[1m%s\x1b[0m', '3. Encrypt String data with PGP keys');
 	console.log('////////////////////////////////////////////////////////////');
 	const recipientPublicKeyArmored = sPGPs.publicKeyArmored;
-	let encrypted = await sPGPs.encryptMessage(recipientPublicKeyArmored, 'Hello world!');
+	let encrypted = await sPGPs.encryptMessage('Hello world!', recipientPublicKeyArmored, true);
 	console.log('Encrypted message:');
 	console.log(encrypted);
 	console.log('Check message:', await sPGPs.checkMessage(encrypted));
@@ -42,9 +42,13 @@ sPGPs = new securePGPstorage();
 	console.log('\x1b[1m%s\x1b[0m', '4. Decrypt String data with PGP keys');
 	console.log('////////////////////////////////////////////////////////////');
 	const senderPublicKeyArmored = sPGPs.publicKeyArmored;
-	let decrypted = await sPGPs.decryptMessage(senderPublicKeyArmored, encrypted);
+	let decrypted = await sPGPs.decryptMessage(encrypted, senderPublicKeyArmored);
 	console.log('Decrypted message:');
 	console.log(decrypted);
+	console.log(decrypted.data);
+	console.log(decrypted.signatures[0].keyID.toHex());
+	console.log(sPGPs.fingerprint);
+	await decrypted.signatures[0].verified;
 	console.log('////////////////////////////////////////////////////////////\n\n\n');
 
 

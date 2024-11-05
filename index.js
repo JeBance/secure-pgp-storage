@@ -28,7 +28,8 @@ class sPGPs {
 				passphrase
 			});
 			this.#passphrase = passphrase;
-			this.fingerprint = (this.#publicKey.getFingerprint()).toUpperCase();
+//			this.fingerprint = (this.#publicKey.getFingerprint()).toUpperCase();
+			this.fingerprint = (this.#publicKey.getFingerprint());
 			this.nickname = this.#publicKey.users[0].userID.name;
 			this.email = this.#publicKey.users[0].userID.email;
 		} catch(e) {
@@ -136,15 +137,23 @@ class sPGPs {
 		return false;
 	}
 
-	async encryptMessage(recipientPublicKeyArmored, string) {
+	async encryptMessage(string, recipientPublicKeyArmored, signature = null) {
 		try {
+			let encrypted;
 			const publicKey = await openpgp.readKey({ armoredKey: recipientPublicKeyArmored });
 			const privateKey = this.#privateKey;
-			const encrypted = await openpgp.encrypt({
-				message: await openpgp.createMessage({ text: string }),	// input as Message object
-				encryptionKeys: publicKey,
-				signingKeys: privateKey		// optional
-			});
+			if (signature === null) {
+				encrypted = await openpgp.encrypt({
+					message: await openpgp.createMessage({ text: string }),	// input as Message object
+					encryptionKeys: publicKey
+				});
+			} else {
+				encrypted = await openpgp.encrypt({
+					message: await openpgp.createMessage({ text: string }),	// input as Message object
+					encryptionKeys: publicKey,
+					signingKeys: privateKey		// optional
+				});
+			}
 			return encrypted;
 		} catch(e) {
 			console.log(e);
@@ -152,19 +161,26 @@ class sPGPs {
 		return false;
 	}
 
-	async decryptMessage(senderPublicKeyArmored, encrypted) {
+	async decryptMessage(encrypted, senderPublicKeyArmored = null) {
 		try {
-			const publicKey = await openpgp.readKey({ armoredKey: senderPublicKeyArmored });
 			const privateKey = this.#privateKey;
 			const message = await openpgp.readMessage({
 				armoredMessage: encrypted	// parse armored message
 			});
-			const { data: decrypted, signatures } = await openpgp.decrypt({
-				message,
-				verificationKeys: publicKey,	// optional
-				decryptionKeys: privateKey
-			});
-			await signatures[0].verified; // throws on invalid signature
+			let decrypted = {};
+			if (senderPublicKeyArmored === null) {
+				decrypted = await openpgp.decrypt({
+					message,
+					decryptionKeys: privateKey
+				});
+			} else {
+				const publicKey = await openpgp.readKey({ armoredKey: senderPublicKeyArmored });
+				decrypted = await openpgp.decrypt({
+					message,
+					verificationKeys: publicKey,	// optional
+					decryptionKeys: privateKey
+				});
+			}
 			return decrypted;
 		} catch(e) {
 			console.log(e);
