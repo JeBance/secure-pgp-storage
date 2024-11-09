@@ -28,7 +28,6 @@ class sPGPs {
 				passphrase
 			});
 			this.#passphrase = passphrase;
-//			this.fingerprint = (this.#publicKey.getFingerprint()).toUpperCase();
 			this.fingerprint = (this.#publicKey.getFingerprint());
 			this.nickname = this.#publicKey.users[0].userID.name;
 			this.email = this.#publicKey.users[0].userID.email;
@@ -44,6 +43,16 @@ class sPGPs {
 			const type = Object.prototype.toString.call(result);
 			return type === '[object Object]' 
 				|| type === '[object Array]';
+		} catch(e) {
+			console.log(e);
+		}
+		return false;
+	}
+
+	async readKey(publicKeyArmored) {
+		try {
+			let key = await openpgp.readKey({ armoredKey: publicKeyArmored });
+			return key;
 		} catch(e) {
 			console.log(e);
 		}
@@ -117,7 +126,7 @@ class sPGPs {
 			if (this.hasJsonStructure(decrypted)) {
 				const parseData = JSON.parse(decrypted);
 				this.#publicKey = await openpgp.readKey({ armoredKey: parseData.publicKey });
-				this.fingerprint = (this.#publicKey.getFingerprint()).toUpperCase();
+				this.fingerprint = this.#publicKey.getFingerprint();
 				this.nickname = this.#publicKey.users[0].userID.name;
 				this.email = this.#publicKey.users[0].userID.email;
 				this.#privateKey = await openpgp.decryptKey({
